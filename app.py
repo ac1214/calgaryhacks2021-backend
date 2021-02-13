@@ -1,5 +1,4 @@
-import uuid
-import time
+import random
 from flask import Flask, jsonify, request
 import os
 import firebase_admin
@@ -59,7 +58,8 @@ def get_problems():
             requester_problems.append({"question": question["question_prompt"],
                                         "answer": question["question_answer"]})
 
-    return jsonify({'problem_set': requester_problems, 'partner_problem_set' : partner_problems}), 200
+    return jsonify({'problem_set': requester_problems, 'partner_problem_set': partner_problems}), 200
+
 
 @app.route('/schedule_session', methods=['POST'])
 def schedule_session():
@@ -99,11 +99,23 @@ def schedule_session():
             "user_two": None,
             "meeting_time": meeting_time,
             "course": course,
-            "user_one_questions": [],
-            "user_two_questions": []
+            "user_one_questions": generate_questions(course),
+            "user_two_questions": generate_questions(course)
         })
 
         return "Looking for a match", 201
+
+
+def generate_questions(subject):
+    all_questions = db.collection('questions')\
+                        .where('subject', '==', subject)\
+                        .stream()
+
+    question_list = []
+    for question in all_questions:
+        question_list.append(question.id)
+
+    return random.choices(question_list, k=5)
 
 
 @app.route('/get_all_sessions', methods=['GET'])
