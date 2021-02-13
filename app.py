@@ -48,19 +48,21 @@ def get_problems():
     for question_id in requester_problem_ids:
         question_id = question_id.strip()
         question = db.collection('questions').document(question_id).get().to_dict()
-        requester_problems.append({"question": question["question_prompt"]})
+        if question:
+            requester_problems.append({"question": question["question_prompt"]})
 
     # get partner problems
     for question_id in partner_problem_ids:
         question_id = question_id.strip()
         question = db.collection('questions').document(question_id).get().to_dict()
-        requester_problems.append({"question": question["question_prompt"],
-                                   "answer": question["question_answer"]})
+        if question:
+            requester_problems.append({"question": question["question_prompt"],
+                                        "answer": question["question_answer"]})
 
     return jsonify({'problem_set': requester_problems, 'partner_problem_set' : partner_problems}), 200
 
 
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 80))
+    port = int(os.environ.get('PORT', 1234))
     app.run(host='0.0.0.0', port=port)
