@@ -19,6 +19,50 @@ def home_endpoint():
     return 'Hello World! 123'
 
 
+@app.route('/schedule_session', methods=['POST'])
+def schedule_session():
+    req_json = request.get_json()
+    user_id = req_json["user_id"] if "user_id" in req_json else None
+    meeting_time = req_json["meeting_time"] if "meeting_time" in req_json else None
+    course = req_json["course"] if "course" in req_json else None
+
+    if user_id is None or meeting_time is None or course is None:
+        return "Malformed request", 400
+
+    # If theres others waiting for that meeting time, match them
+    free_spots = []
+    all_sessions = db.collection('sessions')\
+                        .where('meeting_time', '==', meeting_time)\
+                        .where('course', '==', course)\
+                        .stream()
+
+    for session in all_sessions:
+        session_dict = session.to_dict()
+        if session_dict["user_two"] is None:
+            session_dict["session_id"] = session.id
+            free_spots.append(session_dict)
+
+    if len(free_spots) > 0:
+        session_id = free_spots[0]["session_id"]
+        session_ref = db.collection('sessions').document(session_id)
+        session_ref.update({
+            "user_two": user_id
+        })
+
+        return "Found a match", 201
+    else:
+        session_ref = db.collection('sessions').document()
+        session_ref.set({
+            "user_one": user_id,
+            "user_two": None,
+            "meeting_time": meeting_time,
+            "course": course,
+            "user_one_questions": [],
+            "user_two_questions": []
+        })
+
+        return "Looking for a match", 201
+
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 80))
