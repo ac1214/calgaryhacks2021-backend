@@ -64,6 +64,33 @@ def schedule_session():
         return "Looking for a match", 201
 
 
+@app.route('/get_all_sessions', methods=['GET'])
+def get_all_sessions():
+    req_json = request.get_json()
+    user_id = req_json["user_id"] if "user_id" in req_json else None
+
+    if user_id is None:
+        return "User ID not specified", 400
+
+    results = []
+    # Get all sessions as session one
+    sessions_as_user_one = db.collection('sessions') \
+        .where('user_one', '==', user_id) \
+        .stream()
+    for session in sessions_as_user_one:
+        results.append(session.to_dict())
+
+    # Get all sessions as session two
+    sessions_as_user_two = db.collection('sessions') \
+        .where('user_two', '==', user_id) \
+        .stream()
+
+    for session in sessions_as_user_two:
+        results.append(session.to_dict())
+
+    return jsonify({'all_sessions': results}), 200
+
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 80))
     app.run(host='0.0.0.0', port=port)
