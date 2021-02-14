@@ -70,13 +70,14 @@ def get_problems():
 @app.route('/schedule_session', methods=['POST'])
 @cross_origin()
 def schedule_session():
-    req_json = request.get_json()
-    user_id = req_json["user_id"] if "user_id" in req_json else None
-    meeting_time = req_json["meeting_time"] if "meeting_time" in req_json else None
-    course = req_json["course"] if "course" in req_json else None
+    req_json = request.get_json(force=True)
+    print(req_json)
+    user_id = None if "user_id" not in req_json else req_json["user_id"]
+    meeting_time = None if "meeting_time" not in req_json else req_json["meeting_time"]
+    course = None if "course" not in req_json else req_json["course"]
 
     if user_id is None or meeting_time is None or course is None:
-        return "Malformed request", 400
+        return jsonify({"error":"Malformed request"}), 400
 
     # If theres others waiting for that meeting time, match them
     free_spots = []
@@ -98,7 +99,7 @@ def schedule_session():
             "user_two": user_id
         })
 
-        return "Found a match", 201
+        return jsonify({"success":"Found a match"}), 201
     else:
         session_ref = db.collection('sessions').document()
         session_ref.set({
@@ -110,8 +111,9 @@ def schedule_session():
             "user_two_questions": generate_questions(course)
         })
 
-        return "Looking for a match", 201
+        return jsonify({"success":"Looking for a match"}), 201
 
+    return jsonify({"success":"END"}), 201
 
 def generate_questions(subject):
     all_questions = db.collection('questions')\

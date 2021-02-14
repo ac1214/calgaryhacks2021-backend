@@ -61,7 +61,7 @@ def schedule_session():
     name_ids = random.sample(range(0, len(names)), 2)
     name_1 = names[name_ids[0]]
     name_2 = names[name_ids[1]]
-    course = "LSAT"
+    course = "Datastructures and Algorithms"
 
     res = {
         "course": course,
