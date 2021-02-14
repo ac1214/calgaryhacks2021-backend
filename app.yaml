@@ -17,5 +17,5 @@ resources:
   disk_size_gb: 10
 handlers:
 - url: /.*
-  http_headers:
+  http_headers: 
     Access-Control-Allow-Origin: "*"
