@@ -4,6 +4,10 @@ import os
 import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import firestore
+from flask_cors import CORS, cross_origin
+app = Flask(__name__)
+cors = CORS(app)
+app.config['CORS_HEADERS'] = 'Content-Type'
 
 # Use the application default credentials
 cred = credentials.Certificate('./firebase_key.json')
@@ -14,11 +18,13 @@ app = Flask(__name__)
 
 
 @app.route('/')
+@cross_origin()
 def home_endpoint():
     return 'Hello World! 123'
 
 
 @app.route('/get_problems', methods=['GET'])
+@cross_origin()
 def get_problems():
     if 'user_id' not in request.args or 'session_id' not in request.args:
         return jsonify({}), 500
@@ -62,6 +68,7 @@ def get_problems():
 
 
 @app.route('/schedule_session', methods=['POST'])
+@cross_origin()
 def schedule_session():
     req_json = request.get_json()
     user_id = req_json["user_id"] if "user_id" in req_json else None
@@ -119,6 +126,7 @@ def generate_questions(subject):
 
 
 @app.route('/get_all_sessions', methods=['GET'])
+@cross_origin()
 def get_all_sessions():
     req_json = request.get_json()
     user_id = req_json["user_id"] if "user_id" in req_json else None
