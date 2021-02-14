@@ -180,6 +180,57 @@ def get_all_sessions():
 
     return jsonify(results), 200
 
+@app.route('/cancel_session', methods=['DELETE'])
+@cross_origin()
+def cancel_session():
+    req_json = request.get_json(force=True)
+    user_id = None if "user_id" not in req_json else req_json["user_id"]
+    session_id = None if "session_id" not in req_json else req_json["session_id"]
+
+    if user_id is None or session_id is None:
+        return jsonify({"error":"Malformed request"}), 400
+
+    session_ref = db.collection('sessions').document(session_id)
+
+    dict_ref = session_ref.get().to_dict()
+
+    if user_id == dict_ref['user_one']:
+        if dict_ref["user_two"] is None:
+            session_ref.delete()
+        else:
+            dict_ref["user_one"] = None
+            session_ref.set(dict_ref)
+    else:
+        if dict_ref["user_one"] is None:
+            session_ref.delete()
+        else:
+            dict_ref["user_two"] = None
+            session_ref.set(dict_ref)
+
+    results = {}
+    # Get all sessions as session one
+    sessions_as_user_one = db.collection('sessions') \
+        .where('user_one', '==', user_id) \
+        .stream()
+    for session in sessions_as_user_one:
+        sess = session.to_dict()
+        sess['id'] = session.id
+        sess['formatted_questions'] = get_formatted_questions_with_ans(sess["user_two_questions"])
+        results[session.id] = sess
+
+    # Get all sessions as session two
+    sessions_as_user_two = db.collection('sessions') \
+        .where('user_two', '==', user_id) \
+        .stream()
+
+    for session in sessions_as_user_two:
+        sess = session.to_dict()
+        sess['id'] = session.id
+        sess['formatted_questions'] = get_formatted_questions_with_ans(sess["user_one_questions"])
+        results[session.id] = sess    
+
+    return jsonify(results), 200
+
 
 @app.route('/get_all_users', methods=['GET'])
 @cross_origin()
