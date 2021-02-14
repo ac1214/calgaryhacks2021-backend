@@ -92,6 +92,9 @@ def schedule_session():
             session_dict["session_id"] = session.id
             free_spots.append(session_dict)
 
+        if session_dict["user_one"] == user_id or session_dict["user_two"] == user_id:
+            return "Already booked this date", 201
+
     if len(free_spots) > 0:
         session_id = free_spots[0]["session_id"]
         session_ref = db.collection('sessions').document(session_id)
