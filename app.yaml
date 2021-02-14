@@ -17,5 +17,6 @@ resources:
   disk_size_gb: 10
 handlers:
 - url: /.*
+  script: app.py
   http_headers: 
     Access-Control-Allow-Origin: "*"
