@@ -128,8 +128,10 @@ def generate_questions(subject):
 @app.route('/get_all_sessions', methods=['GET'])
 @cross_origin()
 def get_all_sessions():
-    req_json = request.get_json()
-    user_id = req_json["user_id"] if "user_id" in req_json else None
+    if 'user_id' not in request.args:
+        return "Malformed Request", 400
+
+    user_id = request.args.get('user_id')
 
     if user_id is None:
         return "User ID not specified", 400
