@@ -124,6 +124,17 @@ def generate_questions(subject):
 
     return random.choices(question_list, k=5)
 
+def get_formatted_questions_with_ans(questions):
+    res = ""
+
+    for i, question_id in enumerate(questions):
+        question = db.collection('questions').document(question_id).get().to_dict()
+        if question:
+            res += f"## Question {i + 1}  \n**Prompt:**  \n{question['question_prompt']}  \n\n**Answer:**  \n{question['question_answer']}  \n***\n"
+
+    print(res)
+    return res
+
 
 @app.route('/get_all_sessions', methods=['GET'])
 @cross_origin()
@@ -136,13 +147,16 @@ def get_all_sessions():
     if user_id is None:
         return "User ID not specified", 400
 
-    results = []
+    results = {}
     # Get all sessions as session one
     sessions_as_user_one = db.collection('sessions') \
         .where('user_one', '==', user_id) \
         .stream()
     for session in sessions_as_user_one:
-        results.append(session.to_dict())
+        sess = session.to_dict()
+        sess['id'] = session.id
+        sess['formatted_questions'] = get_formatted_questions_with_ans(sess["user_two_questions"])
+        results[session.id] = sess
 
     # Get all sessions as session two
     sessions_as_user_two = db.collection('sessions') \
@@ -150,9 +164,13 @@ def get_all_sessions():
         .stream()
 
     for session in sessions_as_user_two:
-        results.append(session.to_dict())
+        sess = session.to_dict()
+        sess['id'] = session.id
+        sess['formatted_questions'] = get_formatted_questions_with_ans(sess["user_one_questions"])
+        results[session.id] = sess    
+        
 
-    return jsonify({'all_sessions': results}), 200
+    return jsonify(results), 200
 
 
 if __name__ == '__main__':

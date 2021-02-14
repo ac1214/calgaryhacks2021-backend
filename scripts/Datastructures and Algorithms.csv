@@ -1,0 +1,194 @@
+Question,Answer
+"Given an array of integers ```nums``` and an integer ```target```, return indices 
+of the two numbers such that they add up to ```target```.
+
+You may assume that each input would have **exactly one solution**, and you 
+may not use the same element twice.
+
+You can return the answer in any order.
+
+Example 1:
+```
+Input: nums = [2,7,11,15], target = 9
+Output: [0,1]
+Output: Because nums[0] + nums[1] == 9, we return [0, 1].
+```
+
+Example 2: 
+```
+Input: nums = [3,2,4], target = 6
+Output: [1,2]
+```
+
+Example 3:
+```
+Input: nums = [3,3], target = 6
+Output: [0,1]
+```","```java
+public int[] twoSum(int[] nums, int target) {
+    Map<Integer, Integer> map = new HashMap<>();
+    for (int i = 0; i < nums.length; i++) {
+        int complement = target - nums[i];
+        if (map.containsKey(complement)) {
+            return new int[] { map.get(complement), i };
+        }
+        map.put(nums[i], i);
+    }
+    throw new IllegalArgumentException(""No two sum solution"");
+}
+```"
+"Invert a binary tree.
+
+Example:
+
+Input:
+```
+     4
+    /  \
+  2    7
+ / \    /  \
+1  3 6   9
+``` 
+
+Output:
+```
+     4
+    /  \
+  7     2
+ / \    /  \
+9  6 3  1
+```","```java
+public TreeNode invertTree(TreeNode root) {
+    if (root == null) {
+        return null;
+    }
+    TreeNode right = invertTree(root.right);
+    TreeNode left = invertTree(root.left);
+    root.left = right;
+    root.right = left;
+    return root;
+}
+```"
+"Given two strings s and t , write a function to determine if t is an anagram of s.
+
+```
+Example 1:
+Input: s = ""anagram"", t = ""nagaram""
+Output: true
+```
+
+```
+Example 2:
+Input: s = ""rat"", t = ""car""
+Output: false
+```
+
+Note:
+You may assume the string contains only lowercase alphabets.","```java
+public boolean isAnagram(String s, String t) {
+    if (s.length() != t.length()) {
+        return false;
+    }
+    int[] table = new int[26];
+    for (int i = 0; i < s.length(); i++) {
+        table[s.charAt(i) - 'a']++;
+    }
+    for (int i = 0; i < t.length(); i++) {
+        table[t.charAt(i) - 'a']--;
+        if (table[t.charAt(i) - 'a'] < 0) {
+            return false;
+        }
+    }
+    return true;
+}
+```"
+"Given n pairs of parentheses, write a function to generate all combinations 
+of well-formed parentheses.
+
+```
+Example 1:
+Input: n = 3
+Output: [""((()))"",""(()())"",""(())()"",""()(())"",""()()()""]
+```
+```
+Example 2:
+Input: n = 1
+Output: [""()""]
+```","```python
+class Solution(object):
+    def generateParenthesis(self, N):
+        ans = []
+        def backtrack(S = '', left = 0, right = 0):
+            if len(S) == 2 * N:
+                ans.append(S)
+                return
+            if left < N:
+                backtrack(S+'(', left+1, right)
+            if right < left:
+                backtrack(S+')', left, right+1)
+
+        backtrack()
+        return ans
+```"
+"Given a non-negative integer num, return the number of steps to reduce it to zero.
+ If the current number is even, you have to divide it by 2, otherwise, you have to subtract 1 from it.
+
+``` 
+Example 1:
+Input: num = 14
+Output: 6
+Explanation: 
+Step 1) 14 is even; divide by 2 and obtain 7. 
+Step 2) 7 is odd; subtract 1 and obtain 6.
+Step 3) 6 is even; divide by 2 and obtain 3. 
+Step 4) 3 is odd; subtract 1 and obtain 2. 
+Step 5) 2 is even; divide by 2 and obtain 1. 
+Step 6) 1 is odd; subtract 1 and obtain 0.
+```
+
+```
+Example 2:
+Input: num = 8
+Output: 4
+Explanation: 
+Step 1) 8 is even; divide by 2 and obtain 4. 
+Step 2) 4 is even; divide by 2 and obtain 2. 
+Step 3) 2 is even; divide by 2 and obtain 1. 
+Step 4) 1 is odd; subtract 1 and obtain 0.
+```
+
+```
+Example 3:
+Input: num = 123
+Output: 12
+```","```python
+def numberOfSteps (self, num):
+    steps = 0 # We need to keep track of how many steps this takes.
+    while num > 0: # Remember, we're taking steps until num is 0.
+        if num % 2 == 0: # Modulus operator tells us num is *even*.
+            num = num // 2 # So we divide num by 2.
+        else: # Otherwise, num must be *odd*.
+            num = num - 1 # So we subtract 1 from num.
+        steps = steps + 1 # We *always* increment steps by 1.
+    return steps # And at the end, the answer is in steps so we return it.
+```"
+"You are given an array prices where prices[i] is the price of a given stock on the ith day.
+
+You want to maximize your profit by choosing a single day to buy one stock and choosing a different day in the future to sell that stock.
+
+Return the maximum profit you can achieve from this transaction. If you cannot achieve any profit, return 0.
+","```java
+public class Solution {
+    public int maxProfit(int prices[]) {
+        int minprice = Integer.MAX_VALUE;
+        int maxprofit = 0;
+        for (int i = 0; i < prices.length; i++) {
+            if (prices[i] < minprice)
+                minprice = prices[i];
+            else if (prices[i] - minprice > maxprofit)
+                maxprofit = prices[i] - minprice;
+        }
+        return maxprofit;
+    }
+}
+```"
