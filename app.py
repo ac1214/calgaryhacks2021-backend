@@ -181,6 +181,16 @@ def get_all_sessions():
     return jsonify(results), 200
 
 
+@app.route('/get_all_users', methods=['GET'])
+@cross_origin()
+def get_all_users():
+    user_dict = {}
+    for user in auth.list_users().iterate_all():
+        user_dict[user.uid] = user.display_name
+
+    return jsonify(user_dict), 200
+
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 80))
     app.run(host='0.0.0.0', port=port)
