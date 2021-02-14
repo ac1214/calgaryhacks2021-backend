@@ -5,6 +5,7 @@ import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import firestore
 from flask_cors import CORS, cross_origin
+from datetime import datetime
 app = Flask(__name__)
 cors = CORS(app)
 app.config['CORS_HEADERS'] = 'Content-Type'
@@ -66,6 +67,57 @@ def get_problems():
 
     return jsonify({'problem_set': requester_problems, 'partner_problem_set': partner_problems}), 200
 
+@app.route('/cancel_session', methods=['DELETE'])
+@cross_origin()
+def cancel_session():
+    req_json = request.get_json(force=True)
+    user_id = None if "user_id" not in req_json else req_json["user_id"]
+    session_id = None if "session_id" not in req_json else req_json["session_id"]
+
+    if user_id is None or session_id is None:
+        return jsonify({"error":"Malformed request"}), 400
+
+    session_ref = db.collection('sessions').document(session_id)
+
+    dict_ref = session_ref.get().to_dict()
+
+    if user_id == dict_ref['user_one']:
+        if dict_ref["user_two"] is None:
+            session_ref.delete()
+        else:
+            dict_ref["user_one"] = None
+            session_ref.set(dict_ref)
+    else:
+        if dict_ref["user_one"] is None:
+            session_ref.delete()
+        else:
+            dict_ref["user_two"] = None
+            session_ref.set(dict_ref)
+    
+    results = {}
+    # Get all sessions as session one
+    sessions_as_user_one = db.collection('sessions') \
+        .where('user_one', '==', user_id) \
+        .stream()
+    for session in sessions_as_user_one:
+        sess = session.to_dict()
+        sess['id'] = session.id
+        sess['formatted_questions'] = get_formatted_questions_with_ans(sess["user_two_questions"])
+        results[session.id] = sess
+
+    # Get all sessions as session two
+    sessions_as_user_two = db.collection('sessions') \
+        .where('user_two', '==', user_id) \
+        .stream()
+
+    for session in sessions_as_user_two:
+        sess = session.to_dict()
+        sess['id'] = session.id
+        sess['formatted_questions'] = get_formatted_questions_with_ans(sess["user_one_questions"])
+        results[session.id] = sess    
+
+    return jsonify(results), 200
+
 
 @app.route('/schedule_session', methods=['POST'])
 @cross_origin()
@@ -76,9 +128,11 @@ def schedule_session():
     meeting_time = None if "meeting_time" not in req_json else req_json["meeting_time"]
     course = None if "course" not in req_json else req_json["course"]
 
+    print(req_json)
+
     if user_id is None or meeting_time is None or course is None:
         return jsonify({"error":"Malformed request"}), 400
-
+    print("COURSE: ", course)
     # If theres others waiting for that meeting time, match them
     free_spots = []
     all_sessions = db.collection('sessions')\
@@ -127,7 +181,7 @@ def generate_questions(subject):
     for question in all_questions:
         question_list.append(question.id)
 
-    return random.choices(question_list, k=5)
+    return random.choices(question_list, k=min(5, len(question_list)))
 
 def get_formatted_questions_with_ans(questions):
     res = ""
@@ -135,7 +189,10 @@ def get_formatted_questions_with_ans(questions):
     for i, question_id in enumerate(questions):
         question = db.collection('questions').document(question_id).get().to_dict()
         if question:
-            res += f"## Question {i + 1}  \n**Prompt:**  \n{question['question_prompt']}  \n\n**Answer:**  \n{question['question_answer']}  \n***\n"
+            if question['question_answer'] != 'N/A':
+                res += f"## Question {i + 1}  \n**Prompt:**  \n{question['question_prompt']}  \n\n**Answer:**  \n{question['question_answer']}  \n***\n"
+            else:
+                res += f"## Question {i + 1}  \n**Prompt:**  \n{question['question_prompt']}  \n***\n"
 
     print(res)
     return res
@@ -173,7 +230,6 @@ def get_all_sessions():
         sess['id'] = session.id
         sess['formatted_questions'] = get_formatted_questions_with_ans(sess["user_one_questions"])
         results[session.id] = sess    
-        
 
     return jsonify(results), 200
 
