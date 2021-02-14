@@ -5,6 +5,8 @@ import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import firestore
 from flask_cors import CORS, cross_origin
+from firebase_admin import auth
+
 app = Flask(__name__)
 cors = CORS(app)
 app.config['CORS_HEADERS'] = 'Content-Type'
@@ -173,9 +175,18 @@ def get_all_sessions():
         sess['id'] = session.id
         sess['formatted_questions'] = get_formatted_questions_with_ans(sess["user_one_questions"])
         results[session.id] = sess    
-        
 
     return jsonify(results), 200
+
+
+@app.route('/get_all_users', methods=['GET'])
+@cross_origin()
+def get_all_users():
+    user_dict = {}
+    for user in auth.list_users().iterate_all():
+        user_dict[user.uid] = user.display_name
+
+    return jsonify(user_dict), 200
 
 
 if __name__ == '__main__':
